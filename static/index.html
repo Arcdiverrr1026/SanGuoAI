@@ -21,6 +21,11 @@
                 <p class="brand-subtitle">知识库问答助手</p>
             </div>
             
+            <div class="view-switcher" style="padding: 10px 15px; display: flex; gap: 10px; border-bottom: 1px solid var(--border-color);">
+                <button class="btn btn-primary" id="show-qa-btn" style="flex: 1; font-size: 12px; padding: 6px 10px;">📖 问答助手</button>
+                <button class="btn btn-secondary" id="show-sgs-btn" style="flex: 1; font-size: 12px; padding: 6px 10px;">⚔️ 三国杀对决</button>
+            </div>
+            
             <div class="sidebar-content">
                 <form id="config-form" onsubmit="event.preventDefault();">
                     <!-- LLM Configuration Section -->
@@ -216,7 +221,90 @@
                 </div>
             </div>
         </aside>
+
+        <!-- Sanguosha Game Area -->
+        <main class="sgs-area" id="sgs-area" style="display: none; flex: 1; flex-direction: column; overflow: hidden; position: relative;">
+            <header class="chat-header">
+                <div class="chat-header-info">
+                    <h1>三国杀联机战场</h1>
+                    <div class="engine-badge" id="sgs-room-badge">房间号: 未加入</div>
+                </div>
+                <button class="ref-toggle" id="leave-sgs-btn" style="background: rgba(220,53,69,0.2); border-color: rgba(220,53,69,0.4); color: #ff6b6b; display: none;">🚪 离开房间</button>
+            </header>
+
+            <!-- Room Lobby / Creation -->
+            <div class="sgs-lobby" id="sgs-lobby" style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                <div class="lobby-card" style="max-width: 450px; width: 100%; padding: 30px; background: rgba(20, 20, 20, 0.6); border: 1px solid var(--border-color); border-radius: 12px; backdrop-filter: blur(10px); text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+                    <h2 style="font-family: var(--font-serif); margin-bottom: 20px; color: var(--primary-light); font-size: 22px;">⚔️ 密策阁·三国杀战场 ⚔️</h2>
+                    <div style="margin-bottom: 16px; text-align: left;">
+                        <label for="sgs-player-name" style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">我的大名</label>
+                        <input type="text" id="sgs-player-name" placeholder="请输入你的名字（如：赵云）" style="width:100%; padding:10px; background: rgba(255,255,255,0.05); border:1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 14px;">
+                    </div>
+                    <div style="margin-bottom: 20px; text-align: left;">
+                        <label for="sgs-room-id" style="display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">房间号</label>
+                        <input type="text" id="sgs-room-id" placeholder="新建房间留空，加入房间请输入号码" style="width:100%; padding:10px; background: rgba(255,255,255,0.05); border:1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 14px; font-family: monospace;">
+                    </div>
+                    <div style="display: flex; gap: 15px;">
+                        <button class="btn btn-primary" id="sgs-join-btn" style="width: 100%; padding: 12px; font-weight: 600;">创建/加入战场</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Waiting Room (Players List) -->
+            <div class="sgs-waiting" id="sgs-waiting" style="display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
+                <div class="waiting-card" style="max-width: 500px; width: 100%; padding: 30px; background: rgba(20, 20, 20, 0.6); border: 1px solid var(--border-color); border-radius: 12px; backdrop-filter: blur(10px); text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.5);">
+                    <h3 style="margin-bottom: 10px; color: var(--primary-light); font-family: var(--font-serif); font-size: 20px;">等待将领入局</h3>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">房间号：<span id="waiting-room-number" style="font-weight: 700; color: #fff; font-family: monospace; font-size: 16px; border-bottom: 1px dashed var(--primary-light); padding-bottom: 2px;"></span></p>
+                    <div style="text-align: left; margin-bottom: 24px;">
+                        <label style="font-size: 12px; color: var(--text-muted); display: block; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 8px;">已入阁将领 (4-8人)：</label>
+                        <div id="waiting-players-list" style="display: flex; flex-direction: column; gap: 8px;">
+                            <!-- Waiting players -->
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="sgs-start-game-btn" style="width: 100%; padding: 12px; font-weight: 600; display: none;">开启杀局 ⚔️</button>
+                    <p id="sgs-host-tip" style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">需至少 4 位玩家，目前仅房主有权起手。</p>
+                </div>
+            </div>
+
+            <!-- Active Board Game Screen -->
+            <div class="sgs-board" id="sgs-board" style="display: none; flex: 1; flex-direction: column; overflow: hidden; background: radial-gradient(circle, rgba(40,15,5,0.5) 0%, rgba(10,10,10,0.9) 100%);">
+                <!-- Players circle -->
+                <div class="sgs-players-container" id="sgs-players-container" style="flex: 1; position: relative; overflow: hidden; padding: 10px;">
+                    <!-- Circle layout for players -->
+                </div>
+
+                <!-- Mid-board status & game log -->
+                <div class="sgs-mid-console" style="height: 130px; display: flex; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.45);">
+                    <!-- Log panel -->
+                    <div class="sgs-log-panel" id="sgs-log-panel" style="flex: 1; overflow-y: auto; padding: 10px; font-size: 12px; color: var(--text-muted); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 4px; font-family: monospace;">
+                        <!-- Game log items -->
+                    </div>
+                    <!-- Action console (Play/Discard/Skill buttons) -->
+                    <div class="sgs-action-console" style="width: 260px; display: flex; flex-direction: column; justify-content: center; gap: 8px; padding: 10px; background: rgba(20,20,20,0.6);">
+                        <div id="sgs-turn-indicator" style="font-size: 13px; text-align: center; color: var(--primary-light); font-weight: bold; margin-bottom: 2px; text-shadow: 0 0 8px rgba(245,158,11,0.3);">等待对局...</div>
+                        <div id="sgs-prompt-box" style="font-size: 12px; text-align: center; color: #ff6b6b; display: none; margin-bottom: 2px;"></div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" id="sgs-action-pass" style="flex: 1; font-size: 12px; padding: 8px;" disabled>不出/跳过</button>
+                            <button class="btn btn-primary" id="sgs-action-confirm" style="flex: 1; font-size: 12px; padding: 8px;" disabled>确认出牌</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My hand cards panel -->
+                <div class="sgs-my-panel" style="height: 170px; display: flex; align-items: center; padding: 10px; background: rgba(15,15,15,0.85); position: relative; gap: 15px; border-top: 1px solid var(--border-color);">
+                    <!-- Character card & equipment area -->
+                    <div class="sgs-my-profile" id="sgs-my-profile" style="width: 200px; height: 100%; display: flex; gap: 10px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 10px;">
+                        <!-- character info & self equipment slots -->
+                    </div>
+                    <!-- My hand cards -->
+                    <div class="sgs-my-hand" id="sgs-my-hand" style="flex: 1; display: flex; gap: 8px; overflow-x: auto; align-items: center; padding: 5px;">
+                        <!-- Hand cards list -->
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
     <script src="index.js"></script>
+    <script src="sanguosha.js"></script>
 </body>
 </html>

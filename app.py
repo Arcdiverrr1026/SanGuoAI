@@ -5,7 +5,7 @@ import json
 import uuid
 import numpy as np
 from typing import Any, List
-from fastapi import FastAPI, HTTPException, Body, UploadFile, File
+from fastapi import FastAPI, HTTPException, Body, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -13,6 +13,8 @@ from llama_index.core import StorageContext
 
 from config import config_manager
 from core.engine import get_query_engine, get_vector_store_dir, get_embedding_model
+from core.sanguosha import SgsGame
+from typing import Dict
 
 app = FastAPI(title="三国知识库问答助手", description="基于 LlamaIndex 的三国演义问答系统")
 
@@ -302,6 +304,115 @@ def chat(request: QueryRequest):
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"RAG query execution failed: {str(e)}")
+
+# Sanguosha room and connection management
+sgs_games: Dict[str, SgsGame] = {}
+sgs_connections: Dict[str, List[Dict[str, Any]]] = {}
+
+async def broadcast_sgs_state(room_id: str):
+    game = sgs_games.get(room_id)
+    if not game:
+        return
+    conns = sgs_connections.get(room_id, [])
+    
+    # Hide details based on player perspective
+    for conn in conns:
+        ws = conn["websocket"]
+        p_name = conn["player_name"]
+        
+        # Serialize state
+        players_data = []
+        reveal_to = p_name if game.phase != "ended" else "all_dead"
+        for pl in game.players:
+            players_data.append(pl.to_dict(reveal_identity_to=reveal_to))
+            
+        current_turn_player = game.players[game.current_player_index].name if game.players else ""
+        
+        state_msg = {
+            "type": "state_update",
+            "room_id": game.room_id,
+            "is_started": game.is_started,
+            "phase": game.phase,
+            "current_player": current_turn_player,
+            "players": players_data,
+            "discard_pile_size": len(game.discard_pile),
+            "deck_size": len(game.deck),
+            "response_type": game.response_type,
+            "response_target": game.response_target.name if game.response_target else None,
+            "response_source": game.response_source.name if game.response_source else None,
+            "duel_turn": game.duel_turn,
+            "logs": game.logs,
+            "winner": game.winner
+        }
+        try:
+            await ws.send_json(state_msg)
+        except Exception:
+            pass
+
+@app.websocket("/ws/sanguosha/{room_id}/{player_name}")
+async def websocket_sgs_endpoint(websocket: WebSocket, room_id: str, player_name: str):
+    await websocket.accept()
+    
+    if room_id not in sgs_games:
+        sgs_games[room_id] = SgsGame(room_id)
+    game = sgs_games[room_id]
+    
+    # Add player to game logic
+    success = game.join_player(player_name)
+    if not success:
+        await websocket.close(code=1008, reason="Room full or game already started")
+        return
+        
+    if room_id not in sgs_connections:
+        sgs_connections[room_id] = []
+    
+    # Remove existing connection for same player name if any
+    sgs_connections[room_id] = [c for c in sgs_connections[room_id] if c["player_name"] != player_name]
+    sgs_connections[room_id].append({"websocket": websocket, "player_name": player_name})
+    
+    await broadcast_sgs_state(room_id)
+    
+    try:
+        while True:
+            data = await websocket.receive_json()
+            action = data.get("action")
+            
+            if action == "start_game":
+                p = game.get_player_by_name(player_name)
+                if p and p.is_host:
+                    game.start_game()
+            elif action == "play_card":
+                card_id = data.get("card_id")
+                target_name = data.get("target_name")
+                conversion = data.get("conversion")
+                game.handle_card_play(player_name, card_id, target_name, conversion)
+            elif action == "respond_card":
+                card_id = data.get("card_id") # Null means pass
+                conversion = data.get("conversion")
+                game.handle_response(player_name, card_id, conversion)
+            elif action == "bagua_judge":
+                game.handle_bagua_judge(player_name)
+            elif action == "rende":
+                card_ids = data.get("card_ids", [])
+                target_name = data.get("target_name")
+                game.handle_rende(player_name, card_ids, target_name)
+            elif action == "zhiheng":
+                card_ids = data.get("card_ids", [])
+                game.handle_zhiheng(player_name, card_ids)
+            elif action == "end_turn":
+                game.end_turn()
+                
+            await broadcast_sgs_state(room_id)
+            
+    except WebSocketDisconnect:
+        sgs_connections[room_id] = [c for c in sgs_connections[room_id] if c["player_name"] != player_name]
+        if not game.is_started:
+            game.remove_player(player_name)
+            if not sgs_connections[room_id]:
+                sgs_games.pop(room_id, None)
+                sgs_connections.pop(room_id, None)
+            else:
+                await broadcast_sgs_state(room_id)
 
 # Mount static files at the end to serve index.html at root "/"
 static_dir = os.path.join(BASE_DIR, "static")

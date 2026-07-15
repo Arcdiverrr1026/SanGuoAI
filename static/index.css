@@ -708,3 +708,269 @@ body {
         display: block;
     }
 }
+
+/* ==========================================
+   Sanguosha Board CSS Styles
+   ========================================== */
+
+.view-switcher button {
+    transition: all 0.2s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.view-switcher button.btn-primary {
+    box-shadow: 0 0 10px rgba(217, 119, 6, 0.2);
+}
+
+/* Sgs Player node positioning and elements */
+.sgs-player-node {
+    position: absolute;
+    width: 105px;
+    height: 145px;
+    background: linear-gradient(135deg, #1f1813 0%, #110c09 100%);
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.6);
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    z-index: 5;
+}
+
+.sgs-player-node:hover {
+    border-color: rgba(217, 119, 6, 0.5);
+    transform: translate(-50%, -50%) scale(1.03);
+}
+
+.sgs-player-node.active-turn {
+    border-color: var(--primary-light) !important;
+    box-shadow: 0 0 25px rgba(217, 119, 6, 0.7);
+    z-index: 10;
+}
+
+.sgs-player-node.dead {
+    opacity: 0.45;
+    filter: grayscale(100%);
+    border-color: #3f3f3f !important;
+    box-shadow: none;
+}
+
+.sgs-player-node.dead::after {
+    content: "☠️ 阵亡";
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff6b6b;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.sgs-player-node.target-select {
+    cursor: pointer;
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+    animation: pulseBorder 1.5s infinite;
+}
+
+@keyframes pulseBorder {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.sgs-player-header {
+    height: 22px;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px;
+    font-size: 11px;
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.sgs-player-avatar {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    position: relative;
+    background-size: cover;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+    font-weight: bold;
+}
+
+.sgs-player-avatar-skill {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9px;
+    background: rgba(0,0,0,0.6);
+    color: var(--primary-light);
+    padding: 1px 0;
+}
+
+.sgs-player-identity-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 9.5px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-weight: bold;
+    text-shadow: none;
+}
+
+.sgs-player-identity-badge.lord { background: #b91c1c; color: #fff; }
+.sgs-player-identity-badge.loyalist { background: #15803d; color: #fff; }
+.sgs-player-identity-badge.rebel { background: #2563eb; color: #fff; }
+.sgs-player-identity-badge.defector { background: #6b21a8; color: #fff; }
+.sgs-player-identity-badge.unknown { background: #4b5563; color: #fff; }
+
+.sgs-player-hp-bar {
+    height: 18px;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 11px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.sgs-hook-hp {
+    font-size: 11px;
+    color: #10b981;
+}
+.sgs-hook-hp.lost {
+    color: #374151;
+}
+
+.sgs-player-equipments {
+    height: 38px;
+    font-size: 9px;
+    background: rgba(10,10,10,0.3);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    padding: 3px;
+}
+
+.sgs-player-eq-item {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    padding-left: 3px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sgs-player-eq-item.equipped {
+    color: var(--primary-light);
+    border-color: rgba(217, 119, 6, 0.25);
+    background: rgba(217, 119, 6, 0.05);
+}
+
+/* Sanguosha Cards styles */
+.sgs-card {
+    width: 90px;
+    height: 130px;
+    background: linear-gradient(135deg, #2e241b 0%, #1c1510 100%);
+    border: 1px solid rgba(217, 119, 6, 0.3);
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    flex-shrink: 0;
+}
+
+.sgs-card:hover {
+    transform: translateY(-12px);
+    border-color: var(--primary-light);
+    box-shadow: 0 8px 16px rgba(217, 119, 6, 0.25);
+}
+
+.sgs-card.selected {
+    transform: translateY(-24px) scale(1.05);
+    border-color: var(--primary-light);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.8);
+    background: linear-gradient(135deg, #3d2f23 0%, #261d15 100%);
+}
+
+.sgs-card-suit-val {
+    font-size: 14px;
+    font-weight: 700;
+    font-family: monospace;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.sgs-card-suit-val.red { color: #f87171; }
+.sgs-card-suit-val.black { color: #9ca3af; }
+
+.sgs-card-name {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #e5e7eb;
+    font-family: var(--font-serif);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.sgs-card-type-badge {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    font-size: 8px;
+    color: var(--text-muted);
+    background: rgba(0,0,0,0.4);
+    padding: 1px 3px;
+    border-radius: 2px;
+}
+
+/* Shake Animation for hit */
+@keyframes shakeNode {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+    20%, 60% { transform: translate(-50%, -50%) translateX(-8px) rotate(-1deg); }
+    40%, 80% { transform: translate(-50%, -50%) translateX(8px) rotate(1deg); }
+}
+
+.sgs-player-node.shake {
+    animation: shakeNode 0.35s ease-in-out;
+}
+
+.sgs-player-node.damaged-flash {
+    box-shadow: 0 0 35px #ef4444;
+    border-color: #ef4444 !important;
+}
+
+/* Lobby input hover */
+#sgs-lobby input:focus, #sgs-waiting input:focus {
+    outline: none;
+    border-color: var(--primary-light);
+    box-shadow: 0 0 10px rgba(217, 119, 6, 0.2);
+}
+
