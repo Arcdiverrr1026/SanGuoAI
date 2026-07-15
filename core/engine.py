@@ -10,8 +10,8 @@ from llama_index.core import (
 )
 from llama_index.core.node_parser import SentenceSplitter
 
-from final.config import config_manager
-from final.core.models import CustomLLM, CustomEmbeddings
+from config import config_manager
+from core.models import CustomLLM, CustomEmbeddings
 
 def get_safe_dir_name(model_name: str) -> str:
     """Sanitize the model name to be a safe directory name."""
@@ -19,7 +19,8 @@ def get_safe_dir_name(model_name: str) -> str:
 
 def get_vector_store_dir() -> str:
     """Get the persistent directory for the current configuration."""
-    base_storage_path = config_manager.get_config("system.storage_path", "/Users/lucent/AIGC_project/final/vector_store")
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    base_storage_path = config_manager.get_config("system.storage_path", os.path.join(base_dir, "vector_store"))
     embed_model_name = config_manager.get_config("embedding.model", "embedding-3")
     chunk_size = config_manager.get_config("rag.chunk_size", 500)
     chunk_overlap = config_manager.get_config("rag.chunk_overlap", 50)
@@ -65,7 +66,8 @@ def get_query_engine(force_rebuild: bool = False):
     If force_rebuild is True, delete the current configuration's vector store and rebuild.
     """
     vector_dir = get_vector_store_dir()
-    docs_path = config_manager.get_config("system.docs_path", "/Users/lucent/AIGC_project/final/data")
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    docs_path = config_manager.get_config("system.docs_path", os.path.join(base_dir, "data"))
     
     # 1. Instantiate the embedding model
     embed_model = get_embedding_model()

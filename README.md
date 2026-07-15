@@ -8,11 +8,13 @@
 ## 📂 项目结构说明
 
 ```text
-final/
+/Users/lucent/sanguoai/
 ├── config.yaml          # 默认配置文件（大模型/嵌入模型、分块参数、检索 Top-K 等）
 ├── config.py            # 配置管理模块（ConfigManager，支持前端动态参数修改与自动持久化）
 ├── app.py               # FastAPI 后端服务（提供问答、配置、上传和收藏夹的 REST APIs）
 ├── README.md            # 项目说明文档（本文件）
+├── pyproject.toml       # 项目依赖定义文件（通过 uv 管理包）
+├── uv.lock              # uv 锁文件
 ├── core/
 │   ├── __init__.py
 │   ├── models.py        # 自定义 LLM (CustomLLM) 与 嵌入模型 (CustomEmbeddings) 适配模块
@@ -20,41 +22,61 @@ final/
 ├── data/
 │   ├── sanguo.txt       # 初始整理的三国演义核心知识点文本
 │   └── favorites.json   # 收藏夹数据库（保存已收藏的问答对及问题向量，用于语义预检索）
-├── vector_store/        # 向量数据库存储根目录（依当前激活的“模型_ChunkSize_Overlap”细分目录存储）
+├── vector_store/        # 向量数据库存储根目录（根据当前激活的“模型_ChunkSize_Overlap”细分目录存储）
 └── static/
     ├── index.html       # Web 前端交互页面
-    ├── index.css        # 前端界面样式表（战地黄沙与烈火旌旗暗色主题，带有自适应战场背景）
+    ├── index.css        # 前端界面样式表（战地黄沙与烈火旌旗暗色主题，自适应战场背景）
     ├── index.js         # 前端 JavaScript 逻辑（负责上传、收藏、配置同步与聊天通信）
-    └── bg.png           #  battlefield 战地背景壁纸
+    └── bg.png           # 战场背景壁纸
 ```
 
 ---
 
-## 🛠️ 环境准备与依赖安装
+## 🛠️ 依赖管理与环境准备
 
-项目运行在 Python 3.12 虚拟环境中。需要确保已安装以下依赖包：
+项目使用 **`uv`** 管理虚拟环境与 Python 包依赖：
 
 ```bash
-# 激活您的虚拟环境（若未激活）
-source .venv/bin/box/activate  # 或对应您系统的激活脚本
+# 进入项目目录
+cd /Users/lucent/sanguoai
 
-# 安装必要依赖
-pip install fastapi uvicorn python-multipart llama-index openai pyyaml numpy
+# 若当前终端已激活了其他路径的虚拟环境，请先退出
+deactivate
+
+# 使用 uv 同步依赖包并自动还原虚拟环境
+uv sync
 ```
 
 ---
 
 ## 🚀 启动与运行
 
-在 `/Users/lucent/AIGC_project` 根目录下，通过设置 `PYTHONPATH` 环境变量启动后端服务器：
+在 `/Users/lucent/sanguoai` 根目录下，直接使用 `uv run` 启动后端服务器：
 
+### 推荐启动命令：
 ```bash
-# 启动 FastAPI 后端服务
-PYTHONPATH=. .venv/bin/python final/app.py
+# 启动 FastAPI 后端服务（支持热重载）
+uv run python app.py
+```
+
+或者使用指定参数的 Uvicorn 启动命令：
+```bash
+uv run python -m uvicorn app:app --reload --port 8088
 ```
 
 服务启动后，在浏览器访问：
 👉 **[http://localhost:8088](http://localhost:8088)**
+
+---
+
+## 💻 PyCharm 运行配置说明
+
+若在 PyCharm 中运行，由于项目路径变更，您需要配置有效的 Python SDK（解释器）：
+1. 在 PyCharm 中打开 **Settings (Cmd + ,)** -> **Project: sanguoai** -> **Python Interpreter**。
+2. 点击 **Add Interpreter** -> **Add Local Interpreter...**，选择 **Existing** 虚拟环境。
+3. 将路径指向项目根目录下的虚拟环境：
+   `/Users/lucent/sanguoai/.venv/bin/python`
+4. 保存配置后，直接点击右上角运行 `app` 即可。
 
 ---
 
@@ -72,4 +94,5 @@ PYTHONPATH=. .venv/bin/python final/app.py
 ### 3. 妙计收藏与语义预匹配极速召回
 - **一键收藏**：对于满意的回答，点击聊天气泡右下角的 **“⭐ 收藏此策”** 即可收藏，该收藏问答对的文本及问题向量会持久化记录在 `data/favorites.json`。
 - **双栏查阅**：右侧抽屉面板提供了 **“📋 召回文献”** 和 **“⭐ 收藏妙计”** 双标签页，支持直接浏览已收录的妙计或进行 **“❌ 移除”**。
-- **语义直达**：当您提问时，系统会率先通过 Cosine 相似度将提问与收藏库的问题进行语义对比。若**匹配度 > 82%**，则绕过 RAG 检索与大模型计算，在 **0.05 秒**内直接从收藏库召回答案，并在聊天界面上提示 `【✨ 已直接从收藏秘策中召回 (匹配度: XX.X%)】`，为您大幅节省 Token。
+- **语义直达**：当您提问时，系统会率先通过 Cosine 相似度将提问与收藏库的问题进行语义对比。若**匹配度 > 82%**，则绕过 RAG 检索与大模型计算，在 **0.05 秒**内直接从收藏库召回答案，并在聊天界面上提示 `【✨ 已直接从收藏秘策中召回 (匹配度: XX.X%)
+`，为您大幅节省 Token。

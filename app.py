@@ -11,8 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from llama_index.core import StorageContext
 
-from final.config import config_manager
-from final.core.engine import get_query_engine, get_vector_store_dir, get_embedding_model
+from config import config_manager
+from core.engine import get_query_engine, get_vector_store_dir, get_embedding_model
 
 app = FastAPI(title="三国知识库问答助手", description="基于 LlamaIndex 的三国演义问答系统")
 
@@ -37,7 +37,8 @@ class FavoriteRequest(BaseModel):
     answer: str = Field(..., description="要收藏的回答")
 
 # Favorites storage constants and helpers
-FAVORITES_FILE = "/Users/lucent/AIGC_project/final/data/favorites.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FAVORITES_FILE = os.path.join(BASE_DIR, "data", "favorites.json")
 
 def cosine_similarity(a, b):
     a = np.array(a)
@@ -123,7 +124,7 @@ def rebuild_index():
 @app.get("/api/kb/status")
 def get_kb_status():
     """Retrieve detailed status of the knowledge base files and vector stores."""
-    docs_path = config_manager.get_config("system.docs_path", "/Users/lucent/AIGC_project/final/data")
+    docs_path = config_manager.get_config("system.docs_path", os.path.join(BASE_DIR, "data"))
     vector_dir = get_vector_store_dir()
     
     # 1. Get knowledge base files list
@@ -215,7 +216,7 @@ def upload_file(file: UploadFile = File(...)):
     if not file.filename.endswith('.txt'):
         raise HTTPException(status_code=400, detail="Only .txt files are allowed.")
         
-    docs_path = config_manager.get_config("system.docs_path", "/Users/lucent/AIGC_project/final/data")
+    docs_path = config_manager.get_config("system.docs_path", "/Users/lucent/final/data")
     os.makedirs(docs_path, exist_ok=True)
     
     target_path = os.path.join(docs_path, file.filename)
@@ -303,11 +304,11 @@ def chat(request: QueryRequest):
         raise HTTPException(status_code=500, detail=f"RAG query execution failed: {str(e)}")
 
 # Mount static files at the end to serve index.html at root "/"
-static_dir = "/Users/lucent/AIGC_project/final/static"
+static_dir = os.path.join(BASE_DIR, "static")
 os.makedirs(static_dir, exist_ok=True)
 app.mount("/", StaticFiles(directory=static_dir, html=True), name="static")
 
 if __name__ == "__main__":
     port = int(config_manager.get_config("system.server_port", 8088))
     print(f"Starting server on port {port}...")
-    uvicorn.run("final.app:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run("app:app", host="0.0.0.0", port=port, reload=True)
