@@ -20,14 +20,14 @@ class ConfigManager:
             # Fallback default values
             self._config = {
                 "embedding": {
-                    "api_base": "https://open.bigmodel.cn/api/paas/v4/",
-                    "api_key": "79a00282369a40d2a074b7ea31184f81.DXLwpmyfguXugwYn",
+                    "api_base"
+                    "api_key"
                     "model": "embedding-3",
                     "provider": "zhipu"
                 },
                 "llm": {
-                    "api_base": "https://open.bigmodel.cn/api/paas/v4/",
-                    "api_key": "79a00282369a40d2a074b7ea31184f81.DXLwpmyfguXugwYn",
+                    "api_base"
+                    "api_key"
                     "max_tokens": 2048,
                     "model": "glm-4",
                     "provider": "zhipu",
@@ -41,8 +41,8 @@ class ConfigManager:
                     "system_prompt": "你是一个三国知识库问答助手。根据下面的知识库内容回答问题：\n\n{context_str}\n\n问题：\n{query_str}\n\n如果知识库没有相关信息，请说明不知道。"
                 },
                 "system": {
-                    "docs_path": "/Users/lucent/AIGC_project/final/data",
-                    "storage_path": "/Users/lucent/AIGC_project/final/vector_store"
+                    "docs_path"
+                    "storage_path"
                 }
             }
             # Save the default fallback
